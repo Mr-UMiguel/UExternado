@@ -11,6 +11,8 @@ class get_data():
 
     def __init__(self,symbols,start_date,end_date,frequency=None,type_price="Adj Close"):
         """
+        Miguel Angel Manrique Rodriguez
+        
         Esta clase le permite descargar datos del precio de los instrumentos financieros presentes en Yahoo Finance
 
         Es un ejercicio educativo para la materia Teoría de Portafolios de la Universidad Externado de Colombia

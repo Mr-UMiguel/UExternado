@@ -120,6 +120,7 @@ text(sigmapt,rpt,labels = "T",pos = 2)
 # Construcción de la Línea del Mercado de Capitales - LMC
 
 wpc <- seq(0,1.5,length=100)
+wpc
 rpc <- matrix(0,nrow=100)
 sigmapc <- matrix(0,nrow=100)  
 

@@ -80,14 +80,17 @@ class PMV:
             self.sigma_target = None
             ptlegend = None
 
-        def plot():
+        def plot(include_assets=False):
             fig = pmv_plot(
                 mu = self.mu,
                 vcov = self.vcov,
                 g =  self.g,
                 h =  self.h,
                 sigmapmv = self.sigmapmv,
-                rpmv = self.rpmv
+                rpmv = self.rpmv,
+                include_assets = include_assets,
+                sigma = self.sigma,
+                symbols = self.returns.columns
             )
             sns.scatterplot(x=self.sigma_target,y=self.rp_target, color="#BE33FF", marker="$\circ$", ec="face", s=150, label=ptlegend)
             plt.title("Portafolo óptimo de Mínima Varianza - MV")
@@ -102,17 +105,13 @@ class PMV:
 
         # return self
 
-    def sharpe(self,short_sell=True):
+    def sharpe(self):
         mv = self.mv()
         ########################################################################
         ## Introducción del activo libre de riesgo
         rf = 0
         er = mv.mu - rf
-        if short_sell == True:
-            zi = np.linalg.solve(mv.vcov,er)
-        else:
-            ones = np.ones(len(mv.mu))
-            zi = ones @ np.linalg.inv(mv.vcov) @ ones
+        zi = np.linalg.solve(mv.vcov,er)
 
         self.wpt = np.squeeze(np.asarray(zi / sum(zi))) # "portafolio óptimo de sharpe"
 
@@ -140,7 +139,7 @@ class PMV:
 
         
 
-        def plot(lmc=False):
+        def plot(lmc=False,include_assets=False):
             ptlegend = ''.join((
             'Psharpe( '
             r'$\mu=%.2f$, ' % (self.rpt, ),
@@ -152,7 +151,10 @@ class PMV:
                 h = mv.h,
                 sigmapmv= mv.sigmapmv,
                 rpmv = mv.rpmv,
-                lmc = lmc
+                lmc = lmc,
+                include_assets = include_assets,
+                sigma = self.sigma,
+                symbols = self.returns.columns
             )
             sns.scatterplot(x=self.sigmapt,y=self.rpt, color="#3393FF", marker="$\circ$", ec="face", s=150, label=ptlegend)
             if lmc == True:
@@ -168,7 +170,8 @@ class PMV:
 
 
 def pmv_plot(mu,vcov,g,h,
-            sigmapmv,rpmv,lmc=False):
+            sigmapmv,rpmv,
+            lmc=False,include_assets=False, sigma=None,symbols=None):
 
     N = 1000
     Rp = np.linspace(start=np.min(mu), stop=np.max(mu),num=N)
@@ -182,8 +185,18 @@ def pmv_plot(mu,vcov,g,h,
         rpo[i] = wi @ mu
         wpo[i] = wi
 
-    xmin, xmax = sigmapo.min()-(1/len(sigmapo)), sigmapo.max()
-    ymin, ymax = rpo.min(), rpo.max()
+    if include_assets == True:  
+        if any(sigma) != None:
+            mu_norm = np.concatenate((mu,rpo))
+            mu_norm = normalize(mu_norm, min(mu_norm), max(mu_norm))
+            sigma_norm = np.concatenate((sigma,sigmapo))
+            sigma_norm = normalize(sigma_norm, min(sigma_norm), max(sigma_norm))
+            
+            xmin, xmax = min(sigma_norm)-(1/len(sigma_norm)) , max(sigma_norm)+(1/len(sigma_norm))
+            ymin, ymax = min(mu_norm)-(1/len(mu_norm)), max(mu_norm)+(1/len(mu_norm))
+    else:
+        xmin, xmax = sigmapo.min()-(1/len(sigmapo)), sigmapo.max()+(1/len(sigmapo))
+        ymin, ymax = rpo.min()-(1/len(rpo)), rpo.max()+(1/len(rpo))
 
     pmvglegend = ''.join((
     'PMVg( '
@@ -200,7 +213,13 @@ def pmv_plot(mu,vcov,g,h,
             plt.fill_between(x=[0,sigmapo[i]], y1=rpo[i-1],  y2=rpo[i],color="#77DDFF",alpha=0.1, interpolate = True)
             plt.fill_between(x=[sigmapo[i],xmax], y1=rpo[i-1],  y2=rpo[i],color="#77FFA9",alpha=0.1, interpolate = True)
 
-    sns.scatterplot(x=sigmapmv,y=rpmv, color="#E3550E", marker="$\circ$", ec="face", s=150, label=pmvglegend)
+    sns.scatterplot(x=sigmapmv,y=rpmv, color="#E3550E", marker="$\circ$", ec="face", s=200, label=pmvglegend)
+    
+    if include_assets == True:
+        sns.scatterplot(x=sigma_norm[:len(sigma)], y=mu_norm[:len(mu)],color="#EAECE7", marker="$\circ$", ec="face", s=80)
+        for mn, sm, name in zip(mu_norm[:len(mu)],sigma_norm[:len(sigma)],symbols):
+            plt.annotate(name,xy=(sm,mn))
+        
     if lmc == True:
         plt.xlim(0,xmax)
         plt.ylim(0,ymax)
@@ -213,3 +232,12 @@ def pmv_plot(mu,vcov,g,h,
 
     # plt.show()
     return fig
+
+def normalize(arr, t_min, t_max):
+    norm_arr = []
+    diff = t_max - t_min
+    diff_arr = max(arr) - min(arr)    
+    for i in arr:
+        temp = (((i - min(arr))*diff)/diff_arr) + t_min
+        norm_arr.append(temp)
+    return norm_arr

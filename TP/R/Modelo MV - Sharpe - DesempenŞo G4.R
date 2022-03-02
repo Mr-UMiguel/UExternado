@@ -36,7 +36,7 @@ for(i in 1:length(activos)){
 colnames(precios) <- activos # Pega encabezado de nombres en "precios" - fila título
 tclass(precios) <- "Date"  # Formato de fecha en "precios" - columna título
 
-#plot(precios[,1:3], type = "s", main = "Precios", lwd = 4)
+plot(precios[,1:3], type = "s", main = "Precios", lwd = 4)
 
 # 1) GENERACIÓN DE VARIABLES EXOGENAS Y ALGEBRA DEL MODELO
 

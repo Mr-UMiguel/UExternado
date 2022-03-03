@@ -13,6 +13,7 @@ library(xts)
 library(zoo)
 library(TTR)
 library(quantmod)
+library(corrplot)
 
 rm(list=ls()) #Limpia el Environment de R
 
@@ -47,6 +48,9 @@ mu <- colMeans(retornos) # Retorno esperado para cada activo
 
 var <- diag(cov)      # Varianza
 sigma <- sqrt(var)    # Desviacion estandar 
+
+cor(retornos)
+corrplot::corrplot(cor(precios))
 
 # b) Construcción del conjunto de portafolios optimos
 n <- length(mu)
@@ -265,7 +269,7 @@ barplot(wqp3,main="Pesos PT con Restricciones",col="purple",cex.names = 0.7)
 # Portafolio T (sin restricción)
 
 # Inversión
-valor <- 100
+valor <- 30
 
 # a) Retornos historicos del portafolio PT (sin restricción)
 rpsharpe <- retornos%*%as.numeric(wqp2)
@@ -324,7 +328,7 @@ p.indice <- xts()
 for(i in 1:length(indice)){
   aux <- Ad(getSymbols(indice[i],from=fecha1,to=fecha2,
                        periodicity=periodicidad,auto.assign=FALSE))
-  aux <- na.approx(aux,na.rm=FALSE) # Interpolaci?n de datos con NA
+  aux <- na.approx(aux,na.rm=FALSE) # Interpolación de datos con NA
   p.indice <- cbind(p.indice,aux)
 }
 colnames(p.indice) <- indice
@@ -332,6 +336,7 @@ tclass(p.indice) <- "Date"
 
 r.indice <- diff(log(p.indice))[-1]
 
+t
 port.indice <- matrix(0,nrow=t)
 port.indice[1] <- valor
 
@@ -346,7 +351,7 @@ port.minv <- ts(port.minv,start=2011,frequency = 12)
 port.indice <- ts(port.indice,start=2011,frequency = 12)
 port.target <- ts(port.target,start=2011,frequency = 12)
 
-# x11()
+x11()
 plot(port.indice,type="s",main="Grafico de desempeño",ylab="Inversión USD",ylim=c(0,max(port.indice*8)))
 legend("topleft",c("Indice","PMV","PT Cortos","PT sin Cortos","PTarget"),
        fill=c("black","red","green","blue","purple"))

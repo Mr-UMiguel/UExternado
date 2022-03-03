@@ -11,21 +11,77 @@ sns.set_theme(font="Times New Roman",font_scale=1)
 class PMV:
 
     def __init__(self,returns):
+        """
+        Miguel Angel Manrique Rodriguez
+        
+        Esta clase le permite calcular el portafolio óptimo de mínima varianza global PMVg,
+        el portafolio óptimo de sharpe o portafolio tangente de sharpe, y la curva de mercado
+        de capitales.
+
+        Es un ejercicio educativo para la materia Teoría de Portafolios de la Universidad Externado de Colombia
+        a cargo del profesor Oscar Reyes
+
+        Parámetros
+        ------------------------------------------------
+
+        returns: pd.core.frame.Dataframe object
+
+                Data frame de pandas con los retornos de los precios de los activos
+                para calcular el retorno puede usar get_data().returns(), use
+                help(get_data.precios)
+        """
         self.returns = returns
 
     def mv(self,target_return=None):
         """
-        
-        
-        Valores devueltos
-        ----------------------------------------------------------------
+        El método mv de Mínima Varianza le permite calcular el portafolio óptimo de mínima varianza global
+        y el portafolio óptimo con rentorno objetivo deseados
 
-            wpmv : ponderaciónes del portafolio de mínima varianza
-            rpmv : retorno (rentabilidad) del portafolio de mínima varianza
-            sigmapmv : varianza (riesgo) del portafolio de mínima varianza
-        
+
+        Parámetros
+        ---------------------
+
+        target_return : float
+
+            Si desea calcular el portafolio óptimo para un retorn objetivo deseado
+            utilice target_return y especifique el retorno deseado
+
+
+        Valores devueltos (atributos)
+        ----------------------------------------------------------------
+        sea n el número de acciones
+
+            vcov : matriz (n x n) de varianzas y covarianzas 
+            corr : matriz (n x n) de coeficientes de correlación de pearson 
+            mu   : vector (n,) de retornos promedio 
+            var  : vector (n,) de varianzas 
+            sigma: vector (n,) de desviaciónes estándar
+
+            rpmv : retorno (rentabilidad) del portafolio de mínima varianza global
+            sigmapmv : varianza (riesgo) del portafolio de mínima varianza global
+            wpmv : ponderaciónes del portafolio de mínima varianza global
+
+            pmv : rpmv, sigmapmv, wpmv
+
+        Si target_return = True:
+            rp_target : target_return
+            sigma_target : varianza (riesgo) del portafolio óptimo con retorno objetivo
+            wp_target : ponderaciónes del portafolio óptimo con retorno objetivo
+        Métodos
+        ----------------------------------------------------------------
+        plot() : method
+
+            Grafica la frontea eficiente de markowitz con el portafolio óptimo
+
+            include_assets : bool, default=False
+
+                Si True entonces se estandarizan la media y la desviación estandar y se incluyen
+                todos los activos de returns, es un parámetro puramente estético.
+
+                Si False no se estandariza la media y la desviación estandar y no se incluyen
+                los activos de returns 
         """
-        # variance-covariance matriz and correlation matrix
+        # variance-covariance matrix and correlation matrix
         try:
             self.vcov, self.corr = np.matrix(self.returns.cov()), np.matrix(self.returns.corr())
         except:
@@ -41,13 +97,13 @@ class PMV:
         ################################################################
         # Construcción de los portafolios óptimos
 
-        # longitud del vector mu
+        # longitud del vector mu (cantidad de activos)
         n = len(self.mu)
 
         # Creamos un vector de unos de longitud n
         ones = np.ones(n)
 
-        # Solucionamos el ejercicio de optimización
+        # Solucionamos el ejercicio de optimización (ver notas.ipynb)
         x = self.mu @ np.linalg.inv(self.vcov) @ self.mu
         y = self.mu @ np.linalg.inv(self.vcov) @ ones
         z = ones @ np.linalg.inv(self.vcov) @ ones
@@ -64,6 +120,7 @@ class PMV:
         self.pmv = self.rpmv, self.sigmapmv, self.wpmv
 
         ################################################################
+        ## target_return
         ## Calculamos los pesos óptimos y el riesgo con un retorno Objetivo
 
         if target_return != None:
@@ -106,6 +163,42 @@ class PMV:
         # return self
 
     def sharpe(self):
+        """
+        El método sharpe de Sharpe le permite calcular el portafolio óptimo de sharpe, o portafolio 
+        tangente de sharpe y la linea del mercado de capitales
+
+
+
+        Valores devueltos (atributos)
+        ----------------------------------------------------------------
+        sea n el número de acciones
+
+            rpt : retorno (rentabilidad) del portafolio de sharpe
+            sigmapt : varianza (riesgo) del portafolio de sharpe
+            wpt : ponderaciónes del portafolio de sharpe
+
+            psharpe = rpt, sigmapt, wpt
+
+
+        Métodos
+        ----------------------------------------------------------------
+        plot() : method
+
+            Grafica la frontea eficiente de markowitz con el portafolio óptimo
+
+            include_assets : bool, default=False
+
+                Si True entonces se estandarizan la media y la desviación estandar y se incluyen
+                todos los activos de returns, es un parámetro puramente estético.
+
+                Si False no se estandariza la media y la desviación estandar y no se incluyen
+                los activos de returns 
+
+            lmc : bool, default=False
+
+                Si True entonces calcula la linea del mercado de capitales con activo libre de riesgo
+                de lo contrario False
+        """
         mv = self.mv()
         ########################################################################
         ## Introducción del activo libre de riesgo
@@ -122,6 +215,7 @@ class PMV:
         self.sigmapt = np.asarray(np.sqrt(self.wpt @ mv.vcov @ self.wpt)).reshape(-1)
 
         self.psharpe = self.rpt, self.sigmapt, self.wpt
+
         
         ################################
         # Construcción de la línea del mercado de capitales
@@ -172,6 +266,9 @@ class PMV:
 def pmv_plot(mu,vcov,g,h,
             sigmapmv,rpmv,
             lmc=False,include_assets=False, sigma=None,symbols=None):
+    """
+    Función auxiliar que permite graficar la frontera eficiente
+    """
 
     N = 1000
     Rp = np.linspace(start=np.min(mu), stop=np.max(mu),num=N)
@@ -241,3 +338,38 @@ def normalize(arr, t_min, t_max):
         temp = (((i - min(arr))*diff)/diff_arr) + t_min
         norm_arr.append(temp)
     return norm_arr
+
+# def plot3d():
+#     p1 = pd.Series(np.random.normal(40,10,100))
+#     p2 = pd.Series(np.random.normal(100,20,100))
+
+#     r1 = np.log(p1/(p1.shift(1))).dropna()
+#     r2 = np.log(p2/(p2.shift(1))).dropna()
+
+#     mu = np.array([np.mean(r1),np.mean(r2)])
+#     vcov = np.cov(r1,r2)
+#     sigma = np.sqrt(np.diag(vcov))
+#     weights = np.random.dirichlet(np.ones(2),size=100)
+
+#     w1 = weights[:,0]
+#     w2 = weights[:,1]
+
+#     sigma1 = sigma[0]
+#     sigma2 = sigma[1]
+#     cov = vcov[0,1]
+#     #minimizar la varianza
+#     V = (w1**2)*(sigma1**2)+(w2**2)*(sigma2**2)+ (2*w1*w2)* cov
+
+#     xmin, xmax = min(w1) , max(w1)
+#     ymin, ymax = min(w2), max(w2)
+
+#     fig = plt.figure(figsize=(10,7))
+#     ax = plt.axes(projection='3d')
+#     x = np.linspace(xmin,xmax,100)
+#     y = np.linspace(ymin,ymax,100)
+#     X, Y = np.meshgrid(x, y)
+#     Z = (X**2)*(sigma1**2)+(Y**2)*(sigma2**2)+ (2*X*Y)* cov
+#     ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
+#                     cmap='viridis', edgecolor='none')
+#     ax.set_title('Distribuciones mltivariadas');
+#     plt.show()

@@ -22,21 +22,30 @@ class get_data():
 
         Parámetros
         ---------------------
-        symbols: Símbolos o 'Tickets' usados en yahoo finance como nemotécnico de los diferentes instrumentos financieros 
-                para mayor información ver la librería yfinance
+        symbols: list
 
-        start_date: Fecha inicial de los datos
+                Lista de símbolos o 'Tickets' usados en yahoo finance como nemotécnico de los diferentes 
+                instrumentos financieros, para mayor información ver la librería yfinance
+
+        start_date: str
+        
+                    Fecha inicial de los datos
                     'YYYY-DD-MM'
 
-        end_date: Fecha Final de los datos
+        end_date: str
+        
+                    Fecha Final de los datos
                     'YYYY-DD-MM'
 
-        frequency; Periodicidad de los datos, puede ser 1d, M, Q, Y ---> ver yfinance
+        frequency: str , default = "1d"
+        
+                    Periodicidad de los datos, puede ser 1d, M, Q, Y ---> ver yfinance
 
-        type_price: Tipo de precio, a saber: 
-                    'Close' --> Precio de cierre
-                    'Adj Close' --> Precio de cierre ajustado
-                    
+        type_price: str , default = 'Adj Close'
+
+                    Tipo de precio, a saber: 
+                    'Close' : Precio de cierre
+                    'Adj Close' : Precio de cierre ajustado              
         """
         self.symbols = symbols
         self.start_date = start_date
@@ -47,6 +56,38 @@ class get_data():
 
     
     def prices(self,plot={'draw':False,'standarise':False}):
+        """
+        El método prices obtiene los precios de yfinance con los parámetros de la clase get_data
+
+        Adeás se utilizan métodos de la librería pandas y de numpy para la manipulación de los 
+        dataframes
+
+        Parámetros
+        ---------------------
+        plot : dict
+
+            'draw' : bool , default=False
+
+                True si se quiere graficar el precio de  symbols
+                False si no se quiere graficar el precio de  symbols
+
+            'standarise' : bool , default=False
+
+                True si se quiere graficar el precio de  symbols estandarizados
+                False si no se quiere graficar el precio  de symbols estandarizados
+
+        Ejemplo
+        ---------------------
+        [in]  get_data(symbols=['AAPL','TSLA'],start_date="2021-11-30",end_date="2022-01-31",frequency='M').prices()
+
+        [out] 
+                            AAPL Adj Close  TSLA Adj Close
+            2021-11-30      165.089676      1144.760010
+            2021-12-31      177.344055      1056.780029
+            2022-01-31      170.113266      846.349976
+
+        return: pandas.core.frame.Dataframe
+        """
         #Creamos un dataframe vacío para actualizar con nuevos datos
         self.__prices = pd.DataFrame({})
         # Iteramos cada uno de los símbolos para obtener la columna precio o precio ajustado
@@ -56,10 +97,10 @@ class get_data():
             # Escogemos la columna deseada
             if self.type_price == "Close":
                 self.__data = self.__data['Close']
-                self.__data.rename(f"{symbol} Close",inplace=True)
+                self.__data.rename(f"{symbol}",inplace=True)
             elif self.type_price == "Adj Close" or self.type_price == None:
                 self.__data = self.__data['Adj Close']
-                self.__data.rename(f"{symbol} Adj Close",inplace=True)
+                self.__data.rename(f"{symbol}",inplace=True)
 
             else: raise ValueError("type_price onyl can be 'Close' or 'Adj Close'")
 
@@ -90,12 +131,33 @@ class get_data():
 
     def returns(self,return_type,plot=False):
         """
-        Calcula el retorno de los precios, estos pueden ser logarítmicos o artiméticos
+        El método returns obtiene los retronos de los precios de yfinance con los parámetros 
+        de la clase get_data
 
-        Parámetros:
-        --------------------------------
-        return_type: log --> retorno logarítimico
-                    ari --> retorno artimético
+        Además se utilizan métodos de la librería pandas y de numpy para la manipulación de los 
+        dataframes
+
+        Parámetros
+        ---------------------
+        return_type : str , default='log'
+
+            'log' si se calcula el retorno logarítimco
+            'ari' si se calcula el retorno aritmético
+        plot : bool, default=False
+
+            True si se quiere graficar los retornos
+            False si no se quiere graficar los retornos
+
+        Ejemplo
+        ---------------------
+        [in]  get_data(symbols=['AAPL','TSLA'],start_date="2021-11-30",end_date="2022-01-31",frequency='M').returns(return_type='log')
+
+        [out] 
+                            AAPL Adj Close  TSLA Adj Close
+            2021-12-31      0.071603        -0.079968
+            2022-01-31      -0.041627       -0.222049
+
+        return: pandas.core.frame.Dataframe
         """
         if return_type == "log":
             self.__ret = np.log(self.prices()/self.prices().shift(1))

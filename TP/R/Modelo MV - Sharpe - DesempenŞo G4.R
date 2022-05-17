@@ -20,10 +20,12 @@ rm(list=ls()) #Limpia el Environment de R
 # 0) INSUMOS DEL MODELO Y PARAMETRIZACIÓN
 
 # Carga de datos
-activos <- c("TSLA","BAC","MA","KO","F") # Se pueden ingresar n activos
-fecha1 <- "2011-11-30"
-fecha2 <- "2022-01-31"
+activos <- c("MSFT", "T", "VZ", "PFE", "WFC", "CLF", "HSY", "COP", "TGT", "AMZN", "GE", "EBAY",
+             "DDS", "UL", "FB", "TM", "C", "GS", "MMM", "GILD", "MET", "NVR", "V", "FDX", "ALX", "BA") # Se pueden ingresar n activos
+fecha1 <- '2016-12-01'
+fecha2 <- '2022-01-01'
 periodicidad <- "monthly" # También puede ser: daily, weekly
+
 
 #Creación de precios a partir de los activos definidos en "activos"
 precios <- xts()
@@ -37,7 +39,7 @@ for(i in 1:length(activos)){
 colnames(precios) <- activos # Pega encabezado de nombres en "precios" - fila título
 tclass(precios) <- "Date"  # Formato de fecha en "precios" - columna título
 
-plot(precios[,1:3], type = "s", main = "Precios", lwd = 4)
+plot(precios, type = "s", main = "Precios", lwd = 4)
 
 # 1) GENERACIÓN DE VARIABLES EXOGENAS Y ALGEBRA DEL MODELO
 
